@@ -153,6 +153,62 @@ def jev_review_code(code: str, language: str = "unspecified", context: str = "",
     )
 
 
+@server.tool()
+def jev_review_diff(diff: str, language: str = "unspecified", context: str = "", focus: str = "") -> dict[str, Any]:
+    """Check a proposed diff for concrete regressions; the diff and context are sent to TypeSafe."""
+    state = {"language": language, "diff": diff, "context": context, "focus": focus}
+    return _evaluate(
+        state,
+        {
+            "introduces_concrete_bug": {
+                "type": "noul",
+                "instructions": "Does the supplied diff introduce a concrete correctness, security, reliability, or portability bug?",
+            },
+            "primary_category": {
+                "type": "choice",
+                "instructions": "What category best describes the most important concrete issue introduced by the diff?",
+                "criteria": {
+                    "correctness": "Incorrect behavior or a failure for valid inputs.",
+                    "security": "A vulnerability or unsafe handling of data or permissions.",
+                    "reliability": "A failure, hang, race, or resource problem.",
+                    "portability": "Behavior that breaks on a supported platform.",
+                    "performance": "A material performance problem.",
+                    "none": "No concrete issue is apparent.",
+                    "other": "A concrete issue outside the listed categories.",
+                },
+            },
+            "severity": {
+                "type": "score",
+                "instructions": "Rate the most severe concrete issue introduced by the diff.",
+                "criteria": ["No concrete issue", "Minor edge case", "Major functional failure", "Critical widespread failure"],
+            },
+            "needs_human_review": {
+                "type": "noul",
+                "instructions": "Should a human inspect this diff before relying on it?",
+            },
+        },
+    )
+
+
+@server.tool()
+def jev_check_hypothesis(code: str, hypothesis: str, symptom: str = "", language: str = "unspecified", context: str = "") -> dict[str, Any]:
+    """Estimate whether a debugging hypothesis fits the supplied symptom and code; inputs are sent to TypeSafe."""
+    state = {"language": language, "code": code, "hypothesis": hypothesis, "symptom": symptom, "context": context}
+    return _evaluate(
+        state,
+        {
+            "hypothesis_supported": {
+                "type": "noul",
+                "instructions": "Does the stated hypothesis plausibly explain the stated symptom given the supplied code and context?",
+            },
+            "evidence_sufficient": {
+                "type": "noul",
+                "instructions": "Is the supplied code and context sufficient to assess whether the hypothesis explains the symptom?",
+            },
+        },
+    )
+
+
 def main() -> None:
     server.run(transport="stdio")
 
