@@ -209,6 +209,82 @@ def jev_check_hypothesis(code: str, hypothesis: str, symptom: str = "", language
     )
 
 
+@server.tool()
+def jev_review_test_output(output: str, command: str = "", language: str = "", context: str = "") -> dict[str, Any]:
+    """Classify supplied build or test output; the log and context are sent to TypeSafe."""
+    state = {"command": command, "language": language, "output": output, "context": context}
+    return _evaluate(
+        state,
+        {
+            "failure_class": {
+                "type": "choice",
+                "instructions": "What kind of failure is best supported by the supplied build or test output?",
+                "criteria": {
+                    "compile": "A compiler or type-checking failure.",
+                    "link": "A linker or symbol-resolution failure.",
+                    "test_assertion": "A test ran and an assertion or expected result failed.",
+                    "runtime": "The program crashed or failed during execution.",
+                    "timeout_or_flake": "The failure appears intermittent, timing-related, or a timeout.",
+                    "environment_or_dependency": "The output points to a missing tool, dependency, configuration, or environment problem.",
+                    "other": "A different failure type.",
+                    "unclear": "The output is insufficient to classify the failure.",
+                },
+            },
+            "likely_code_regression": {
+                "type": "noul",
+                "instructions": "Does the supplied output provide evidence of a code regression rather than only an environment or tooling problem?",
+            },
+            "severity": {
+                "type": "score",
+                "instructions": "Rate the impact of the failure on the affected development or runtime workflow.",
+                "criteria": ["Informational", "Minor", "Major", "Blocking"],
+            },
+            "evidence_sufficient": {
+                "type": "noul",
+                "instructions": "Is the supplied output and context sufficient to identify the failure class with useful confidence?",
+            },
+        },
+    )
+
+
+@server.tool()
+def jev_triage_bug_report(report: str, context: str = "") -> dict[str, Any]:
+    """Triage a supplied bug report into typed category, impact, and reproduction signals."""
+    state = {"report": report, "context": context}
+    return _evaluate(
+        state,
+        {
+            "issue_type": {
+                "type": "choice",
+                "instructions": "What kind of request or issue is described?",
+                "criteria": {
+                    "correctness_bug": "The software behaves incorrectly or fails.",
+                    "security_issue": "The report describes a security or data-protection risk.",
+                    "performance_issue": "The main concern is speed, resource use, or responsiveness.",
+                    "compatibility_issue": "The problem depends on an operating system, runtime, dependency, or integration.",
+                    "usability_issue": "The software works but is confusing or difficult to use.",
+                    "feature_request": "The report requests new behavior rather than describing a defect.",
+                    "unclear": "The report does not contain enough information to classify.",
+                },
+            },
+            "severity": {
+                "type": "score",
+                "instructions": "Rate the user impact described in the report, not the effort required to fix it.",
+                "criteria": ["No demonstrated impact", "Low impact or workaround exists", "Moderate impact", "High impact or core workflow blocked", "Critical widespread or data-loss impact"],
+            },
+            "reproduction_clarity": {
+                "type": "score",
+                "instructions": "How clearly can the described behavior be reproduced from the report and context?",
+                "criteria": ["No reproducible detail", "Vague symptoms", "Some steps or conditions", "Clear repeatable steps", "Minimal reproduction with expected and actual results"],
+            },
+            "needs_followup": {
+                "type": "noul",
+                "instructions": "Should the reporter be asked for more diagnostic information before the issue is assigned or fixed?",
+            },
+        },
+    )
+
+
 def main() -> None:
     server.run(transport="stdio")
 

@@ -5,7 +5,7 @@ description: Use TypeSafe Jev for a structured second opinion on code, diffs, or
 
 Use the Moreno.Jev MCP tools only when the user requests Jev or invokes this skill. Send only the relevant code, diff, hypothesis, and context the user intends to share with TypeSafe; do not submit an entire repository by default.
 
-Use `jev_review_code` for a focused code triage, `jev_review_diff` to assess a proposed change, and `jev_check_hypothesis` to evaluate a debugging theory against a symptom. Use `jev_evaluate` for custom Choice, Score, or Noul questions. Jev returns typed judgments and probabilities, not explanations or patches.
+Use `jev_review_code` for a focused code triage, `jev_review_diff` to assess a proposed change, `jev_check_hypothesis` to evaluate a debugging theory against a symptom, `jev_review_test_output` to classify build or test logs, and `jev_triage_bug_report` to structure issue intake. Use `jev_evaluate` for custom Choice, Score, or Noul questions. Jev returns typed judgments and probabilities, not explanations or patches.
 
 If the client exposes MCP through a gateway, discover the Moreno.Jev tools through that gateway and call the returned tool name.
 
